@@ -571,6 +571,13 @@ def main(
         extend_vocab,
     )
 
+    # Filter out any 'lm_head' modules from LoRA extraction
+    module_details = [
+        (m_type, m_name)
+        for (m_type, m_name) in module_details
+        if 'lm_head' not in m_name
+    ]
+
     lora_weights, ranks = extract_lora(
         module_details,
         base_model_ref,
