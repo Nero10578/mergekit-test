@@ -584,7 +584,7 @@ def main(
     save_model_and_config(
         lora_weights,
         ranks,
-        finetuned_model_embedding_size > base_model_embedding_size and extend_vocab,
+        0,
         finetuned_model_embedding_size if extend_vocab else base_model_embedding_size,
         module_details,
         invocation_args,
