@@ -102,13 +102,13 @@ def get_model_details(
     module_details = []
 
     for name, module in pretrained_model.named_modules():
-        if module == pretrained_model.get_input_embeddings():
-            # if isinstance(module, torch.nn.Embedding):
-            module_details.append(("embedding", name, module.weight.size()))
-        elif module == pretrained_model.get_output_embeddings():
-            # if isinstance(module, torch.nn.Embedding):
-            module_details.append(("output", name, module.weight.size()))
-        elif hasattr(module, "weight") and isinstance(module.weight, torch.Tensor):
+        # if module == pretrained_model.get_input_embeddings():
+        #     # if isinstance(module, torch.nn.Embedding):
+        #     module_details.append(("embedding", name, module.weight.size()))
+        # elif module == pretrained_model.get_output_embeddings():
+        #     # if isinstance(module, torch.nn.Embedding):
+        #     module_details.append(("output", name, module.weight.size()))
+        if hasattr(module, "weight") and isinstance(module.weight, torch.Tensor):
             if (
                 # SEE: https://github.com/huggingface/peft/blob/main/src/peft/tuners/lora/model.py
                 isinstance(
