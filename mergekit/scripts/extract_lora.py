@@ -96,21 +96,23 @@ def get_model_details(
 
     # Avoid loading weights as we won't need them
     pretrained_model = AutoModelForCausalLM.from_pretrained(
-        model_id, state_dict={}, device_map="meta"
+        model_id, device_map="meta", trust_remote_code=True
     )
 
     module_details = []
 
     for name, module in pretrained_model.named_modules():
-        # if module == pretrained_model.get_input_embeddings():
-        #     # if isinstance(module, torch.nn.Embedding):
-        #     module_details.append(("embedding", name, module.weight.size()))
-        # elif module == pretrained_model.get_output_embeddings():
-        #     # if isinstance(module, torch.nn.Embedding):
-        #     module_details.append(("output", name, module.weight.size()))
+        # MODIFICATION START: Consolidated filter to skip unwanted layers
+        if (name.startswith("model.vision_tower") or
+            name.startswith("model.multi_modal_projector") or
+            'lm_head' in name):
+            logging.info(f"Skipping filtered layer: {name}")
+            continue
+        # MODIFICATION END
+
         if hasattr(module, "weight") and isinstance(module.weight, torch.Tensor):
+            # Check for layers that are suitable for LoRA decomposition
             if (
-                # SEE: https://github.com/huggingface/peft/blob/main/src/peft/tuners/lora/model.py
                 isinstance(
                     module,
                     (
@@ -129,9 +131,12 @@ def get_model_details(
                 )
             ):
                 module_details.append(("linear", name, module.weight.size()))
+            # Handle other layers
             elif not skip_undecomposable:
+                # If not skipping, save the full weights of these layers
                 module_details.append(("to_save", name, module.weight.size()))
             else:
+                # If skipping, log that the module is being ignored
                 logging.info(f"Skipping undecomposable module '{name}'.")
 
     return module_details
@@ -424,7 +429,7 @@ def save_model_and_config(
     model_name = invocation_args["model_name"]
 
     # Work out the actual final rank and only retain those that were lower.
-    final_max_rank = max(ranks.values())
+    final_max_rank = max(ranks.values()) if ranks else 0
     ranks = {k: v for k, v in ranks.items() if v != final_max_rank}
 
     lora_config = create_peft_config(
@@ -571,12 +576,7 @@ def main(
         extend_vocab,
     )
 
-    # Filter out any 'lm_head' modules from LoRA extraction
-    module_details = [
-        (m_type, m_name)
-        for (m_type, m_name) in module_details
-        if 'lm_head' not in m_name
-    ]
+    # MODIFICATION: The lm_head filter that was here has been moved to the get_model_details function.
 
     lora_weights, ranks = extract_lora(
         module_details,
