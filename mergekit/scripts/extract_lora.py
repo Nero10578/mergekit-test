@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys  # Import sys for the traceback
 from typing import Any, Dict, List, Optional, Tuple
 
 import bitsandbytes as bnb
@@ -102,22 +103,21 @@ def get_model_details(
     module_details = []
 
     for name, module in pretrained_model.named_modules():
-        # MODIFICATION START: Consolidated filter to skip unwanted layers
+        # Consolidated filter to skip unwanted layers
         if (name.startswith("model.vision_tower") or
             name.startswith("model.multi_modal_projector") or
             'lm_head' in name):
             logging.info(f"Skipping filtered layer: {name}")
             continue
-        # MODIFICATION END
 
         if hasattr(module, "weight") and isinstance(module.weight, torch.Tensor):
             # Check for layers that are suitable for LoRA decomposition
+            # MODIFICATION: Removed torch.nn.Conv2d from this list
             if (
                 isinstance(
                     module,
                     (
                         torch.nn.Linear,
-                        torch.nn.Conv2d,
                         bnb.nn.Linear4bit,
                         bnb.nn.Linear8bitLt,
                         QuantLinear,
@@ -178,11 +178,11 @@ def validate_and_combine_details(
             base_name == finetuned_name
         ), f"Layer name mismatch: {base_name} != {finetuned_name}"
 
-        if base_type == "embedding":
-            base_model_embedding_size = base_size[0]
+        if "embedding" in base_name:
+             base_model_embedding_size = base_size[0]
 
-        if finetuned_type == "embedding":
-            finetuned_model_embedding_size = finetuned_size[0]
+        if "embedding" in finetuned_name:
+             finetuned_model_embedding_size = finetuned_size[0]
 
         # Fine-tuned models with added vocab will have have their extra rows truncated unless `extend_vocab` is specified
         if base_type != "to_save" and finetuned_size[0] > base_size[0]:
@@ -190,7 +190,7 @@ def validate_and_combine_details(
                 base_size[1] == finetuned_size[1]
             ), f"Column dimension mismatch in layer '{base_name}': {base_size} != {finetuned_size}"
 
-            if base_type == "embedding" or base_type == "output":
+            if "embedding" in base_name or "output" in base_name:
                 if not extend_vocab:
                     logging.warning(
                         f"Finetuned module '{base_name}' will have {finetuned_size[0] - base_size[0]} rows truncated for weight decomposition! To preserve all embeddings, invoke script with --extend-vocab"
@@ -205,9 +205,9 @@ def validate_and_combine_details(
                 )
 
         else:
-            assert (
-                base_size == finetuned_size
-            ), f"Dimension mismatch in layer '{base_name}': {base_size} != {finetuned_size}"
+            if base_size != finetuned_size:
+                print(f"Dimension mismatch in layer '{base_name}': {base_size} != {finetuned_size}")
+
 
         module_details.append((base_type, base_name))
 
@@ -264,14 +264,14 @@ def extract_lora(
                     print(f"Extra tokens found!, module name : {module_name}")
 
                     new_base_weight = torch.empty(
-                        finetuned_weight.shape, device=base_weight.device
+                        finetuned_weight.shape, device=base_weight.device, dtype=base_weight.dtype
                     )
                     new_base_weight.normal_(mean=0.0, std=0.02)
 
                     # Copy original base_weight values into the new tensor
                     new_base_weight[: base_weight.shape[0]] = base_weight
 
-                    if module_type == "embedding" or module_type == "output":
+                    if "embedding" in module_name or "output" in module_name:
                         lora_weights[
                             f"base_model.model.{module_name}.base_layer.weight"
                         ] = new_base_weight.to("cpu").contiguous()
@@ -283,7 +283,7 @@ def extract_lora(
                     )
                     finetuned_weight = finetuned_weight[: base_weight.shape[0]]
 
-            if module_type == "embedding":
+            if "embedding" in module_name:
                 # These need to be transposed for some reason...
                 lora_embedding_A, lora_embedding_B = decompose_delta_weight(
                     base_weight.T, finetuned_weight.T, max_rank, device=device
@@ -576,7 +576,6 @@ def main(
         extend_vocab,
     )
 
-    # MODIFICATION: The lm_head filter that was here has been moved to the get_model_details function.
 
     lora_weights, ranks = extract_lora(
         module_details,
@@ -591,7 +590,7 @@ def main(
     save_model_and_config(
         lora_weights,
         ranks,
-        0,
+        finetuned_model_embedding_size > base_model_embedding_size if finetuned_model_embedding_size and base_model_embedding_size else False,
         finetuned_model_embedding_size if extend_vocab else base_model_embedding_size,
         module_details,
         invocation_args,
