@@ -11,7 +11,7 @@
     "vocab_size_config_key": "text_config.vocab_size",
     "modules": {
         "text_decoder": {
-            "weight_prefix": "language_model.",
+            "weight_prefix": "model.language_model.",
             "architecture": {
                 "model_type": "gemma3_text",
                 "architectures": [
@@ -19,7 +19,7 @@
                 ],
                 "pre_weights": [
                     {
-                        "name": "model.embed_tokens.weight",
+                        "name": "embed_tokens.weight",
                         "is_embed": true
                     }
                 ],
@@ -27,63 +27,77 @@
                 "layer_templates": {
                     "weights": [
                         {
-                            "name": "model.layers.${layer_index}.input_layernorm.weight"
+                            "name": "layers.${layer_index}.input_layernorm.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.self_attn.q_proj.weight"
+                            "name": "layers.${layer_index}.self_attn.q_proj.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.self_attn.q_norm.weight"
+                            "name": "layers.${layer_index}.self_attn.q_norm.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.self_attn.k_proj.weight"
+                            "name": "layers.${layer_index}.self_attn.k_proj.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.self_attn.k_norm.weight"
+                            "name": "layers.${layer_index}.self_attn.k_norm.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.self_attn.v_proj.weight"
+                            "name": "layers.${layer_index}.self_attn.v_proj.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.self_attn.o_proj.weight"
+                            "name": "layers.${layer_index}.self_attn.o_proj.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.post_attention_layernorm.weight"
+                            "name": "layers.${layer_index}.post_attention_layernorm.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.pre_feedforward_layernorm.weight"
+                            "name": "layers.${layer_index}.pre_feedforward_layernorm.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.mlp.up_proj.weight"
+                            "name": "layers.${layer_index}.mlp.up_proj.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.mlp.gate_proj.weight"
+                            "name": "layers.${layer_index}.mlp.gate_proj.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.mlp.down_proj.weight"
+                            "name": "layers.${layer_index}.mlp.down_proj.weight"
                         },
                         {
-                            "name": "model.layers.${layer_index}.post_feedforward_layernorm.weight"
+                            "name": "layers.${layer_index}.post_feedforward_layernorm.weight"
                         }
                     ]
                 },
                 "post_weights": [
                     {
-                        "name": "model.norm.weight"
-                    },
+                        "name": "norm.weight"
+                    }
+                ]
+            }
+        },
+        "output_head": {
+            "weight_prefix": "",
+            "architecture": {
+                "model_type": "gemma3_head",
+                "architectures": [],
+                "pre_weights": [],
+                "layer_templates": {
+                    "weights": []
+                },
+                "post_weights": [
                     {
                         "name": "lm_head.weight",
                         "is_embed": true,
                         "optional": true,
                         "tied_names": [
-                            "model.embed_tokens.weight"
+                            "model.language_model.embed_tokens.weight"
                         ]
                     }
-                ]
+                ],
+                "override_num_layers": 0
             }
         },
         "multi_modal_projector": {
-            "weight_prefix": "multi_modal_projector.",
+            "weight_prefix": "model.multi_modal_projector.",
             "architecture": {
                 "model_type": "gemma3_mmproj",
                 "architectures": [],
@@ -103,7 +117,7 @@
             }
         },
         "vision_tower": {
-            "weight_prefix": "vision_tower.vision_model.",
+            "weight_prefix": "model.vision_tower.vision_model.",
             "architecture": {
                 "model_type": "siglip_vision_model",
                 "architectures": [],
