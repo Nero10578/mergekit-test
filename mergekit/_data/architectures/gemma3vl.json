@@ -123,8 +123,7 @@
                 "architectures": [],
                 "pre_weights": [
                     {
-                        "name": "embeddings.patch_embedding.bias",
-                        "optional": true
+                        "name": "embeddings.patch_embedding.bias"
                     },
                     {
                         "name": "embeddings.patch_embedding.weight"
@@ -135,8 +134,7 @@
                 ],
                 "post_weights": [
                     {
-                        "name": "post_layernorm.bias",
-                        "optional": true
+                        "name": "post_layernorm.bias"
                     },
                     {
                         "name": "post_layernorm.weight"
@@ -145,57 +143,49 @@
                 "layer_templates": {
                     "weights": [
                         {
-                            "name": "encoder.layers.${layer_index}.layer_norm1.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.layer_norm1.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.layer_norm1.weight"
                         },
                         {
-                            "name": "encoder.layers.${layer_index}.layer_norm2.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.layer_norm2.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.layer_norm2.weight"
                         },
                         {
-                            "name": "encoder.layers.${layer_index}.mlp.fc1.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.mlp.fc1.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.mlp.fc1.weight"
                         },
                         {
-                            "name": "encoder.layers.${layer_index}.mlp.fc2.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.mlp.fc2.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.mlp.fc2.weight"
                         },
                         {
-                            "name": "encoder.layers.${layer_index}.self_attn.k_proj.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.self_attn.k_proj.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.self_attn.k_proj.weight"
                         },
                         {
-                            "name": "encoder.layers.${layer_index}.self_attn.out_proj.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.self_attn.out_proj.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.self_attn.out_proj.weight"
                         },
                         {
-                            "name": "encoder.layers.${layer_index}.self_attn.q_proj.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.self_attn.q_proj.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.self_attn.q_proj.weight"
                         },
                         {
-                            "name": "encoder.layers.${layer_index}.self_attn.v_proj.bias",
-                            "optional": true
+                            "name": "encoder.layers.${layer_index}.self_attn.v_proj.bias"
                         },
                         {
                             "name": "encoder.layers.${layer_index}.self_attn.v_proj.weight"
