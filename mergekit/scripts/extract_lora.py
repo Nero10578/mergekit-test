@@ -160,11 +160,16 @@ def main(
     module_real_ranks = {}
     for task, result in executor.run():
         if isinstance(task, TaskVectorDecompositionTask):
-            module_real_ranks[task.weight_info.name.removesuffix(".weight")] = result[
-                0
-            ].shape[0]
+            if result[0] is not None:
+                module_real_ranks[task.weight_info.name.removesuffix(".weight")] = result[
+                    0
+                ].shape[0]
 
-    real_max_rank = max(module_real_ranks.values())
+    if not module_real_ranks:
+        LOG.warning("No LoRA modules extracted")
+        real_max_rank = max_rank
+    else:
+        real_max_rank = max(module_real_ranks.values())
     config_dict = make_config_dict(
         base_ref=base_model_ref,
         max_rank=real_max_rank,
