@@ -218,7 +218,9 @@ def make_config_dict(
     }
 
 
-class TaskVectorDecompositionTask(Task[Tuple[torch.Tensor, torch.Tensor]]):
+class TaskVectorDecompositionTask(
+    Task[Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]]
+):
     weight_info: WeightInfo
     input_task: Task
     max_rank: int
@@ -229,7 +231,12 @@ class TaskVectorDecompositionTask(Task[Tuple[torch.Tensor, torch.Tensor]]):
     def arguments(self) -> Dict[str, Any]:
         return {"task_vector": self.input_task}
 
-    def execute(self, task_vector: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def execute(
+        self, task_vector: Optional[torch.Tensor]
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
+        if task_vector is None:
+            return None, None
+
         if self.transpose:
             task_vector = task_vector.T
         out_dtype = task_vector.dtype
@@ -259,14 +266,18 @@ class TaskVectorDecompositionTask(Task[Tuple[torch.Tensor, torch.Tensor]]):
         return True
 
 
-class TaskVectorTask(Task[torch.Tensor]):
+class TaskVectorTask(Task[Optional[torch.Tensor]]):
     base_tensor: Task
     model_tensor: Task
 
     def arguments(self) -> Dict[str, Any]:
         return {"base": self.base_tensor, "model": self.model_tensor}
 
-    def execute(self, base: torch.Tensor, model: torch.Tensor) -> torch.Tensor:
+    def execute(
+        self, base: Optional[torch.Tensor], model: Optional[torch.Tensor]
+    ) -> Optional[torch.Tensor]:
+        if base is None or model is None:
+            return None
         return model - base
 
     def group_label(self):
@@ -288,7 +299,9 @@ class LoRAModuleSaveTask(Task):
         return {"writer": self.writer_task, "decomp": self.decomposition_task}
 
     def execute(
-        self, writer: TensorWriter, decomp: Tuple[torch.Tensor, torch.Tensor]
+        self,
+        writer: TensorWriter,
+        decomp: Tuple[Optional[torch.Tensor], Optional[torch.Tensor]],
     ) -> None:
         weight_a, weight_b = decomp
         if weight_a is None or weight_b is None:
