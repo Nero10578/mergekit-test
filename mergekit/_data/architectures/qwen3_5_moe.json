@@ -25,31 +25,12 @@
                 ],
                 "post_weights": [
                     {
-                        "name": "model.language_model.norm.weight"
-                    },
-                    {
                         "name": "lm_head.weight",
                         "is_embed": true,
                         "optional": false
                     },
                     {
-                        "name": "mtp.norm.weight",
-                        "optional": true
-                    },
-                    {
-                        "name": "mtp.pre_fc_norm_embedding.weight",
-                        "optional": true
-                    },
-                    {
-                        "name": "mtp.pre_fc_norm_hidden.weight",
-                        "optional": true
-                    },
-                    {
                         "name": "mtp.fc.weight",
-                        "optional": true
-                    },
-                    {
-                        "name": "mtp.layers.0.input_layernorm.weight",
                         "optional": true
                     },
                     {
@@ -97,19 +78,7 @@
                         "optional": true
                     },
                     {
-                        "name": "mtp.layers.0.post_attention_layernorm.weight",
-                        "optional": true
-                    },
-                    {
-                        "name": "mtp.layers.0.self_attn.k_norm.weight",
-                        "optional": true
-                    },
-                    {
                         "name": "mtp.layers.0.self_attn.k_proj.weight",
-                        "optional": true
-                    },
-                    {
-                        "name": "mtp.layers.0.self_attn.q_norm.weight",
                         "optional": true
                     },
                     {
@@ -127,12 +96,6 @@
                 ],
                 "layer_templates": {
                     "weights": [
-                        {
-                            "name": "model.language_model.layers.${layer_index}.input_layernorm.weight"
-                        },
-                        {
-                            "name": "model.language_model.layers.${layer_index}.post_attention_layernorm.weight"
-                        },
                         {
                             "name": "model.language_model.layers.${layer_index}.mlp.gate.weight"
                         },
@@ -155,18 +118,6 @@
                             "name": "model.language_model.layers.${layer_index}.mlp.experts.down_proj"
                         },
                         {
-                            "name": "model.language_model.layers.${layer_index}.linear_attn.A_log",
-                            "optional": true
-                        },
-                        {
-                            "name": "model.language_model.layers.${layer_index}.linear_attn.conv1d.weight",
-                            "optional": true
-                        },
-                        {
-                            "name": "model.language_model.layers.${layer_index}.linear_attn.dt_bias",
-                            "optional": true
-                        },
-                        {
                             "name": "model.language_model.layers.${layer_index}.linear_attn.in_proj_a.weight",
                             "optional": true
                         },
@@ -183,15 +134,7 @@
                             "optional": true
                         },
                         {
-                            "name": "model.language_model.layers.${layer_index}.linear_attn.norm.weight",
-                            "optional": true
-                        },
-                        {
                             "name": "model.language_model.layers.${layer_index}.linear_attn.out_proj.weight",
-                            "optional": true
-                        },
-                        {
-                            "name": "model.language_model.layers.${layer_index}.self_attn.k_norm.weight",
                             "optional": true
                         },
                         {
@@ -200,10 +143,6 @@
                         },
                         {
                             "name": "model.language_model.layers.${layer_index}.self_attn.o_proj.weight",
-                            "optional": true
-                        },
-                        {
-                            "name": "model.language_model.layers.${layer_index}.self_attn.q_norm.weight",
                             "optional": true
                         },
                         {
