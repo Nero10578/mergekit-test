@@ -1,0 +1,65 @@
+{
+  "kind": "modular",
+  "architectures": [
+    "Gemma4ForConditionalGeneration"
+  ],
+  "model_type": "gemma4",
+  "tagalong_files": [
+    "preprocessor_config.json",
+    "processor_config.json"
+  ],
+  "vocab_size_config_key": "text_config.vocab_size",
+  "modules": {
+    "text_decoder": {
+      "weight_prefix": "language_model.",
+      "architecture": {
+        "model_type": "gemma4_text",
+        "architectures": [
+          "Gemma4ForCausalLM"
+        ],
+        "pre_weights": [
+          {
+            "name": "model.embed_tokens.weight",
+            "is_embed": true
+          }
+        ],
+        "num_layers_config_key": "text_config.num_hidden_layers",
+        "layer_templates": {
+          "weights": [
+            {
+              "name": "model.layers.${layer_index}.self_attn.q_proj.weight"
+            },
+            {
+              "name": "model.layers.${layer_index}.self_attn.k_proj.weight"
+            },
+            {
+              "name": "model.layers.${layer_index}.self_attn.v_proj.weight"
+            },
+            {
+              "name": "model.layers.${layer_index}.self_attn.o_proj.weight"
+            },
+            {
+              "name": "model.layers.${layer_index}.mlp.gate_proj.weight"
+            },
+            {
+              "name": "model.layers.${layer_index}.mlp.up_proj.weight"
+            },
+            {
+              "name": "model.layers.${layer_index}.mlp.down_proj.weight"
+            }
+          ]
+        },
+        "post_weights": [
+          {
+            "name": "lm_head.weight",
+            "is_embed": true,
+            "optional": true,
+            "tied_names": [
+              "model.embed_tokens.weight"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
