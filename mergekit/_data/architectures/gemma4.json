@@ -60,6 +60,32 @@
           }
         ]
       }
+    },
+    "vision_tower": {
+      "weight_prefix": "vision_tower.",
+      "architecture": {
+        "model_type": "gemma4_vision",
+        "architectures": [],
+        "pre_weights": [],
+        "post_weights": [],
+        "layer_templates": {
+          "weights": []
+        },
+        "override_num_layers": 0
+      }
+    },
+    "multi_modal_projector": {
+      "weight_prefix": "multi_modal_projector.",
+      "architecture": {
+        "model_type": "gemma4_mmproj",
+        "architectures": [],
+        "pre_weights": [],
+        "post_weights": [],
+        "layer_templates": {
+          "weights": []
+        },
+        "override_num_layers": 0
+      }
     }
   }
 }
