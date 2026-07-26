@@ -96,10 +96,13 @@ LOG = logging.getLogger("extract_lora")
     "--svd-driver",
     "svd_driver",
     type=click.Choice(["gesvd", "gesvdj", "gesvda", "auto"]),
-    default="gesvda",
+    default="gesvdj",
     help="cuSOLVER SVD driver to use on CUDA (gesvd|gesvdj|gesvda|auto). "
-    "'auto' uses gesvda on CUDA and falls back to the default driver on CPU. "
-    "Note: gesvdj is the historical default but can be much slower on some GPUs.",
+    "'gesvdj' is the historical default. 'gesvda' is often faster (especially "
+    "for large or batched matrices) but is an approximate algorithm; it can "
+    "differ from gesvdj in the tail singular values, which matters only when "
+    "using --sv-epsilon > 0. 'auto' uses gesvda on CUDA and the default "
+    "driver on CPU.",
     show_default=True,
 )
 @click.option(
@@ -237,7 +240,7 @@ class TaskVectorDecompositionTask(Task[Tuple[torch.Tensor, torch.Tensor]]):
     distribute_scale: bool = True
     transpose: bool = False
     sv_epsilon: float = 0
-    svd_driver: str = "gesvda"
+    svd_driver: str = "gesvdj"
 
     def arguments(self) -> Dict[str, Any]:
         return {"task_vector": self.input_task}
@@ -397,7 +400,7 @@ def plan_extraction(
     include_regexes: Optional[List[str]] = None,
     sv_epsilon: float = 0,
     skip_undecomposable: bool = False,
-    svd_driver: str = "gesvda",
+    svd_driver: str = "gesvdj",
 ) -> PlanResults:
     targets = []
     writer_task = TensorWriterTask(
@@ -525,7 +528,7 @@ def plan_lora_module(
     distribute_scale: bool = True,
     transpose: bool = False,
     sv_epsilon: float = 0,
-    svd_driver: str = "gesvda",
+    svd_driver: str = "gesvdj",
 ) -> List[Task]:
     targets = []
     base_load_task = _wi_load(base_model_ref, wi)
