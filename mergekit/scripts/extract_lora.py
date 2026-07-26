@@ -93,6 +93,16 @@ LOG = logging.getLogger("extract_lora")
     show_default=True,
 )
 @click.option(
+    "--svd-driver",
+    "svd_driver",
+    type=click.Choice(["gesvd", "gesvdj", "gesvda", "auto"]),
+    default="gesvda",
+    help="cuSOLVER SVD driver to use on CUDA (gesvd|gesvdj|gesvda|auto). "
+    "'auto' uses gesvda on CUDA and falls back to the default driver on CPU. "
+    "Note: gesvdj is the historical default but can be much slower on some GPUs.",
+    show_default=True,
+)
+@click.option(
     "--skip-undecomposable",
     is_flag=True,
     help="Skip saving undecomposable modules",
@@ -111,6 +121,7 @@ def main(
     include_regexes: List[str],
     sv_epsilon: float,
     skip_undecomposable: bool,
+    svd_driver: str,
     merge_options: MergeOptions,
 ):
     merge_options.apply_global_options()
@@ -141,6 +152,7 @@ def main(
         include_regexes=include_regexes,
         sv_epsilon=sv_epsilon,
         skip_undecomposable=skip_undecomposable,
+        svd_driver=svd_driver,
     )
 
     tasks = plan_result.tasks
@@ -225,6 +237,7 @@ class TaskVectorDecompositionTask(Task[Tuple[torch.Tensor, torch.Tensor]]):
     distribute_scale: bool = True
     transpose: bool = False
     sv_epsilon: float = 0
+    svd_driver: str = "gesvda"
 
     def arguments(self) -> Dict[str, Any]:
         return {"task_vector": self.input_task}
@@ -233,9 +246,8 @@ class TaskVectorDecompositionTask(Task[Tuple[torch.Tensor, torch.Tensor]]):
         if self.transpose:
             task_vector = task_vector.T
         out_dtype = task_vector.dtype
-        u, s, vh = torch.linalg.svd(
-            task_vector.to(dtype=torch.float32), full_matrices=False
-        )
+        fp32_vector = task_vector.to(dtype=torch.float32)
+        u, s, vh = self._compute_svd(fp32_vector)
         rank = min(self.max_rank, s.shape[0])
         if self.sv_epsilon > 0:
             rank = min((s > self.sv_epsilon).sum().item(), rank)
@@ -251,6 +263,33 @@ class TaskVectorDecompositionTask(Task[Tuple[torch.Tensor, torch.Tensor]]):
         weight_b = u[:, :rank] @ scale_b
 
         return weight_a.to(dtype=out_dtype), weight_b.to(dtype=out_dtype)
+
+    def _compute_svd(
+        self, matrix: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Compute the SVD of `matrix` using the configured cuSOLVER driver.
+
+        The `driver=` keyword is only supported on CUDA tensors (it selects a
+        cuSOLVER backend). On CPU, or when the requested driver is unavailable,
+        we fall back to the default torch.linalg.svd implementation.
+
+        The "auto" driver uses "gesvda" on CUDA (typically the fastest for the
+        shapes encountered in LoRA extraction) and the default driver on CPU.
+        """
+        driver = self.svd_driver
+        if driver == "auto":
+            driver = "gesvda" if matrix.is_cuda else None
+
+        if driver is None or not matrix.is_cuda:
+            return torch.linalg.svd(matrix, full_matrices=False)
+
+        try:
+            return torch.linalg.svd(matrix, full_matrices=False, driver=driver)
+        except (TypeError, RuntimeError):
+            # Driver not supported by this torch/CUDA build or matrix shape;
+            # fall back to the default driver.
+            return torch.linalg.svd(matrix, full_matrices=False)
 
     def group_label(self) -> Optional[str]:
         return self.input_task.group_label()
@@ -358,6 +397,7 @@ def plan_extraction(
     include_regexes: Optional[List[str]] = None,
     sv_epsilon: float = 0,
     skip_undecomposable: bool = False,
+    svd_driver: str = "gesvda",
 ) -> PlanResults:
     targets = []
     writer_task = TensorWriterTask(
@@ -446,6 +486,7 @@ def plan_extraction(
                         distribute_scale,
                         transpose=isinstance(module, nn.Embedding),
                         sv_epsilon=sv_epsilon,
+                        svd_driver=svd_driver,
                     )
                 )
             else:
@@ -484,6 +525,7 @@ def plan_lora_module(
     distribute_scale: bool = True,
     transpose: bool = False,
     sv_epsilon: float = 0,
+    svd_driver: str = "gesvda",
 ) -> List[Task]:
     targets = []
     base_load_task = _wi_load(base_model_ref, wi)
@@ -496,6 +538,7 @@ def plan_lora_module(
         distribute_scale=distribute_scale,
         transpose=transpose,
         sv_epsilon=sv_epsilon,
+        svd_driver=svd_driver,
     )
     targets.append(decomp_task)
     targets.append(
